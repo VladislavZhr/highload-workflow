@@ -1,0 +1,55 @@
+handler-service/
+├── cmd/
+│   └── app/
+│       └── main.go
+│
+├── internal/
+│   ├── model/
+│   │   ├── transport_message.go
+│   │   ├── processing_status.go
+│   │   ├── processing_record.go
+│   │   ├── business_input.go
+│   │   ├── business_entity.go
+│   │   ├── outbox_message.go
+│   │   └── ack_message.go
+│   │
+│   ├── repository/
+│   │   ├── processing_repository.go
+│   │   ├── business_repository.go
+│   │   └── outbox_repository.go
+│   │
+│   ├── service/
+│   │   ├── consumer_service.go
+│   │   ├── processing_service.go
+│   │   ├── mapper.go
+│   │   └── tx_manager.go
+│   │
+│   ├── kafka/
+│   │   ├── consumer.go
+│   │   ├── producer.go
+│   │   └── outbox_publisher.go
+│   │
+│   ├── worker/
+│     └── pool.go
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+├── db/
+│   ├── migrations/
+│   │   ├── 001_create_message_processing_state.sql
+│   │   ├── 002_create_outbox_table.sql
+│   │   └── 003_create_business_table.sql
+│
+│
+│
+│
+│
+├── go.mod
+└── go.sum

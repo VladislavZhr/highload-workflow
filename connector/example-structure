@@ -1,0 +1,46 @@
+connector/
+├── cmd/
+│   └── app/
+│       └── main.go
+│
+├── internal/
+│   ├── config/
+│   │   └── config.go
+│   │
+│   ├── handler/
+│   │   └── http.go
+│   │
+│   ├── service/
+│   │   └── connector.go
+│   │
+│   ├── kafka/
+│   │   └── producer.go
+│   │
+│   ├── model/
+│   │   ├── request.go
+│   │   ├── response.go
+│   │   ├── transport_message.go
+│   │   └── service_fields.go
+│   │
+│   ├── middleware/
+│   │   └── logging.go
+│   │
+│   ├── logger/
+│   │   └── logger.go
+│   │
+│   └── util/
+│       ├── id.go
+│       └── time.go
+│
+├── configs/
+│   └── local.yaml
+│
+├── scripts/
+│   └── run.sh
+│
+├── test/
+│   └── integration/
+│
+├── go.mod
+├── go.sum
+└── README.md
