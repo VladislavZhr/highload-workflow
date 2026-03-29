@@ -1,4 +1,4 @@
-package model
+package mapper
 
 type ProcessedMessage struct {
 	RequestID     string

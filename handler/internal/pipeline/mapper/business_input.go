@@ -1,4 +1,4 @@
-package model
+package mapper
 
 type BusinessInput struct {
 	Counterparties CounterpartiesPayload `json:"counterparties"`

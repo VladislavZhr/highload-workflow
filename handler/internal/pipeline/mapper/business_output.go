@@ -1,4 +1,4 @@
-package model
+package mapper
 
 import "encoding/xml"
 

@@ -1,9 +1,7 @@
-package service
+package mapper
 
 import (
 	"strconv"
-
-	"github.com/VladislavZhr/highload-workflow/handler/internal/model"
 )
 
 const (
@@ -18,11 +16,11 @@ func NewMapper() *Mapper {
 	return &Mapper{}
 }
 
-func (m *Mapper) Map(input model.BusinessInput, requestDate string) model.BusinessOutput {
-	output := model.BusinessOutput{
-		NBCR: make([]model.NBCR, 0, len(input.Counterparties.Counterparty)),
-		ESBResultStatuses: model.ESBResultStatuses{
-			RequestResultStatus: make([]model.RequestResultStatus, 0, len(input.Counterparties.Counterparty)),
+func (m *Mapper) Map(input BusinessInput, requestDate string) BusinessOutput {
+	output := BusinessOutput{
+		NBCR: make([]NBCR, 0, len(input.Counterparties.Counterparty)),
+		ESBResultStatuses: ESBResultStatuses{
+			RequestResultStatus: make([]RequestResultStatus, 0, len(input.Counterparties.Counterparty)),
 		},
 	}
 
@@ -37,17 +35,17 @@ func (m *Mapper) Map(input model.BusinessInput, requestDate string) model.Busine
 	return output
 }
 
-func (m *Mapper) mapNBCR(counterparty model.CounterpartyInput, requestDate string) model.NBCR {
-	return model.NBCR{
+func (m *Mapper) mapNBCR(counterparty CounterpartyInput, requestDate string) NBCR {
+	return NBCR{
 		CounterpartyID: counterparty.CounterpartyID,
-		Individual: model.Individual{
-			InquiryList: model.InquiryList{
+		Individual: Individual{
+			InquiryList: InquiryList{
 				DayNumber:     0,
 				WeekNumber:    0,
 				MonthNumber:   0,
 				QuarterNumber: 0,
 				YearNumber:    0,
-				Inquiry: model.Inquiry{
+				Inquiry: Inquiry{
 					RequestDate: requestDate,
 				},
 			},
@@ -57,13 +55,13 @@ func (m *Mapper) mapNBCR(counterparty model.CounterpartyInput, requestDate strin
 	}
 }
 
-func (m *Mapper) mapReceipts(items []model.ResultKVIInput) model.Receipts {
-	receipts := model.Receipts{
-		Receipt: make([]model.Receipt, 0, len(items)),
+func (m *Mapper) mapReceipts(items []ResultKVIInput) Receipts {
+	receipts := Receipts{
+		Receipt: make([]Receipt, 0, len(items)),
 	}
 
 	for _, item := range items {
-		receipts.Receipt = append(receipts.Receipt, model.Receipt{
+		receipts.Receipt = append(receipts.Receipt, Receipt{
 			ReceiptNumber: strconv.Itoa(item.OrderBank),
 			MarkOfOwner:   strconv.Itoa(item.MarkOfOwner),
 			LastName:      item.FIO.LastName,
@@ -80,13 +78,13 @@ func (m *Mapper) mapReceipts(items []model.ResultKVIInput) model.Receipts {
 	return receipts
 }
 
-func (m *Mapper) mapLoanContracts(items []model.ResultKVICredit) model.LoanContracts {
-	contracts := model.LoanContracts{
-		LoanContract: make([]model.LoanContract, 0, len(items)),
+func (m *Mapper) mapLoanContracts(items []ResultKVICredit) LoanContracts {
+	contracts := LoanContracts{
+		LoanContract: make([]LoanContract, 0, len(items)),
 	}
 
 	for _, item := range items {
-		contracts.LoanContract = append(contracts.LoanContract, model.LoanContract{
+		contracts.LoanContract = append(contracts.LoanContract, LoanContract{
 			LoanType:             strconv.Itoa(item.TypeCredit),
 			ContractReference:    item.NumberDog,
 			BookingDate:          item.DogDay,
@@ -108,13 +106,13 @@ func (m *Mapper) mapLoanContracts(items []model.ResultKVICredit) model.LoanContr
 	return contracts
 }
 
-func (m *Mapper) mapTrancheList(items []model.ResultKVITranche) model.TrancheList {
-	tranches := model.TrancheList{
-		Tranche: make([]model.Tranche, 0, len(items)),
+func (m *Mapper) mapTrancheList(items []ResultKVITranche) TrancheList {
+	tranches := TrancheList{
+		Tranche: make([]Tranche, 0, len(items)),
 	}
 
 	for _, item := range items {
-		tranches.Tranche = append(tranches.Tranche, model.Tranche{
+		tranches.Tranche = append(tranches.Tranche, Tranche{
 			TrancheReference:     item.NumDogTr,
 			BookingDate:          item.DogDayTr,
 			MaturityDate:         item.EndDayTr,
@@ -133,13 +131,13 @@ func (m *Mapper) mapTrancheList(items []model.ResultKVITranche) model.TrancheLis
 	return tranches
 }
 
-func (m *Mapper) mapPledgeList(items []model.PledgeInput) model.PledgeList {
-	pledges := model.PledgeList{
-		Pledge: make([]model.Pledge, 0, len(items)),
+func (m *Mapper) mapPledgeList(items []PledgeInput) PledgeList {
+	pledges := PledgeList{
+		Pledge: make([]Pledge, 0, len(items)),
 	}
 
 	for _, item := range items {
-		pledges.Pledge = append(pledges.Pledge, model.Pledge{
+		pledges.Pledge = append(pledges.Pledge, Pledge{
 			PledgeDate:   item.PledgeDay,
 			PledgeType:   item.S031,
 			PledgeNumber: strconv.Itoa(item.OrderZastava),
@@ -149,13 +147,13 @@ func (m *Mapper) mapPledgeList(items []model.PledgeInput) model.PledgeList {
 	return pledges
 }
 
-func (m *Mapper) mapInfoCreditors(items []model.InfoCreditorInput) model.InfoCreditors {
-	infoCreditors := model.InfoCreditors{
-		InfoCreditor: make([]model.InfoCreditor, 0, len(items)),
+func (m *Mapper) mapInfoCreditors(items []InfoCreditorInput) InfoCreditors {
+	infoCreditors := InfoCreditors{
+		InfoCreditor: make([]InfoCreditor, 0, len(items)),
 	}
 
 	for _, item := range items {
-		infoCreditors.InfoCreditor = append(infoCreditors.InfoCreditor, model.InfoCreditor{
+		infoCreditors.InfoCreditor = append(infoCreditors.InfoCreditor, InfoCreditor{
 			Creditor:               item.Creditor,
 			CreditorInfo:           item.CreditorInfo,
 			RelationshipPersonK060: item.K060RespRelation,
@@ -168,8 +166,8 @@ func (m *Mapper) mapInfoCreditors(items []model.InfoCreditorInput) model.InfoCre
 	return infoCreditors
 }
 
-func (m *Mapper) mapIdentPerson(item model.IndPersonInput) model.IdentPerson {
-	return model.IdentPerson{
+func (m *Mapper) mapIdentPerson(item IndPersonInput) IdentPerson {
+	return IdentPerson{
 		LastName:       item.LastName,
 		FirstName:      item.FirstName,
 		MiddleName:     item.Patronymic,
@@ -180,13 +178,13 @@ func (m *Mapper) mapIdentPerson(item model.IndPersonInput) model.IdentPerson {
 	}
 }
 
-func (m *Mapper) mapCredits(items []model.InfoCreditInput) model.Credits {
-	credits := model.Credits{
-		Credit: make([]model.Credit, 0, len(items)),
+func (m *Mapper) mapCredits(items []InfoCreditInput) Credits {
+	credits := Credits{
+		Credit: make([]Credit, 0, len(items)),
 	}
 
 	for _, item := range items {
-		credits.Credit = append(credits.Credit, model.Credit{
+		credits.Credit = append(credits.Credit, Credit{
 			Liability:   m.mapLiability(item.Liability),
 			CreditLoans: m.mapCreditLoans(item.Loan),
 		})
@@ -195,8 +193,8 @@ func (m *Mapper) mapCredits(items []model.InfoCreditInput) model.Credits {
 	return credits
 }
 
-func (m *Mapper) mapLiability(item model.LiabilityInput) model.Liability {
-	return model.Liability{
+func (m *Mapper) mapLiability(item LiabilityInput) Liability {
+	return Liability{
 		LoanType:           item.F037LoanType,
 		AgreementNumber:    item.AgreemNo,
 		AgreementStartDate: item.AgreemStartDate,
@@ -215,13 +213,13 @@ func (m *Mapper) mapLiability(item model.LiabilityInput) model.Liability {
 	}
 }
 
-func (m *Mapper) mapLiabilityCreditTrancheList(items []model.LiabilityTrancheInput) model.CreditTrancheList {
-	list := model.CreditTrancheList{
-		CreditTranche: make([]model.CreditTranche, 0, len(items)),
+func (m *Mapper) mapLiabilityCreditTrancheList(items []LiabilityTrancheInput) CreditTrancheList {
+	list := CreditTrancheList{
+		CreditTranche: make([]CreditTranche, 0, len(items)),
 	}
 
 	for _, item := range items {
-		list.CreditTranche = append(list.CreditTranche, model.CreditTranche{
+		list.CreditTranche = append(list.CreditTranche, CreditTranche{
 			LoanType:           item.F037LoanType,
 			AgreementStartDate: item.AgreemStartDate,
 			AgreementEndDate:   derefString(item.ObligationEndDate),
@@ -240,13 +238,13 @@ func (m *Mapper) mapLiabilityCreditTrancheList(items []model.LiabilityTrancheInp
 	return list
 }
 
-func (m *Mapper) mapFactors(items []model.FactorInput) model.Factors {
-	factors := model.Factors{
-		Factor: make([]model.Factor, 0, len(items)),
+func (m *Mapper) mapFactors(items []FactorInput) Factors {
+	factors := Factors{
+		Factor: make([]Factor, 0, len(items)),
 	}
 
 	for _, item := range items {
-		factors.Factor = append(factors.Factor, model.Factor{
+		factors.Factor = append(factors.Factor, Factor{
 			CRDefaultEvent:     item.F075GRiskEventList,
 			CRDefaultEventCode: item.RiskEventCode,
 		})
@@ -255,13 +253,13 @@ func (m *Mapper) mapFactors(items []model.FactorInput) model.Factors {
 	return factors
 }
 
-func (m *Mapper) mapCollaterals(items []model.CollateralInput) model.Collaterals {
-	collaterals := model.Collaterals{
-		Collateral: make([]model.Collateral, 0, len(items)),
+func (m *Mapper) mapCollaterals(items []CollateralInput) Collaterals {
+	collaterals := Collaterals{
+		Collateral: make([]Collateral, 0, len(items)),
 	}
 
 	for _, item := range items {
-		collaterals.Collateral = append(collaterals.Collateral, model.Collateral{
+		collaterals.Collateral = append(collaterals.Collateral, Collateral{
 			AgreementStartDate: item.AgreemStartDate,
 			Movables:           m.mapMovables(item.Movable),
 			Immovables:         m.mapImmovables(item.Immovable),
@@ -272,13 +270,13 @@ func (m *Mapper) mapCollaterals(items []model.CollateralInput) model.Collaterals
 	return collaterals
 }
 
-func (m *Mapper) mapMovables(items []model.CollateralMovableInput) model.Movables {
-	movables := model.Movables{
-		CollatList: make([]model.CollateralListItem, 0, len(items)),
+func (m *Mapper) mapMovables(items []CollateralMovableInput) Movables {
+	movables := Movables{
+		CollatList: make([]CollateralListItem, 0, len(items)),
 	}
 
 	for _, item := range items {
-		movables.CollatList = append(movables.CollatList, model.CollateralListItem{
+		movables.CollatList = append(movables.CollatList, CollateralListItem{
 			CollateralType:   item.S031ColType,
 			CurrencyCode:     item.R030Currency,
 			CollateralAmount: item.CollateralAmount,
@@ -288,13 +286,13 @@ func (m *Mapper) mapMovables(items []model.CollateralMovableInput) model.Movable
 	return movables
 }
 
-func (m *Mapper) mapImmovables(items []model.CollateralMovableInput) model.Immovables {
-	immovables := model.Immovables{
-		CollatList: make([]model.CollateralListItem, 0, len(items)),
+func (m *Mapper) mapImmovables(items []CollateralMovableInput) Immovables {
+	immovables := Immovables{
+		CollatList: make([]CollateralListItem, 0, len(items)),
 	}
 
 	for _, item := range items {
-		immovables.CollatList = append(immovables.CollatList, model.CollateralListItem{
+		immovables.CollatList = append(immovables.CollatList, CollateralListItem{
 			CollateralType:   item.S031ColType,
 			CurrencyCode:     item.R030Currency,
 			CollateralAmount: item.CollateralAmount,
@@ -304,13 +302,13 @@ func (m *Mapper) mapImmovables(items []model.CollateralMovableInput) model.Immov
 	return immovables
 }
 
-func (m *Mapper) mapDeposits(items []model.CollateralDepositInput) model.CollatDeposits {
-	deposits := model.CollatDeposits{
-		CollatList: make([]model.DepositCollatListItem, 0, len(items)),
+func (m *Mapper) mapDeposits(items []CollateralDepositInput) CollatDeposits {
+	deposits := CollatDeposits{
+		CollatList: make([]DepositCollatListItem, 0, len(items)),
 	}
 
 	for _, item := range items {
-		deposits.CollatList = append(deposits.CollatList, model.DepositCollatListItem{
+		deposits.CollatList = append(deposits.CollatList, DepositCollatListItem{
 			CurrencyCode:     item.R030Currency,
 			CollateralAmount: item.CollateralAmount,
 		})
@@ -319,13 +317,13 @@ func (m *Mapper) mapDeposits(items []model.CollateralDepositInput) model.CollatD
 	return deposits
 }
 
-func (m *Mapper) mapCreditLoans(items []model.LoanInput) model.CreditLoans {
-	loans := model.CreditLoans{
-		CreditLoan: make([]model.CreditLoan, 0, len(items)),
+func (m *Mapper) mapCreditLoans(items []LoanInput) CreditLoans {
+	loans := CreditLoans{
+		CreditLoan: make([]CreditLoan, 0, len(items)),
 	}
 
 	for _, item := range items {
-		loans.CreditLoan = append(loans.CreditLoan, model.CreditLoan{
+		loans.CreditLoan = append(loans.CreditLoan, CreditLoan{
 			LoanType:              item.F037LoanType,
 			AgreementNumber:       item.AgreemNo,
 			AgreementStartDate:    derefString(item.AgreemStartDate),
@@ -351,13 +349,13 @@ func (m *Mapper) mapCreditLoans(items []model.LoanInput) model.CreditLoans {
 	return loans
 }
 
-func (m *Mapper) mapLoanCreditTrancheList(items []model.LoanTrancheInput) model.CreditTrancheList {
-	list := model.CreditTrancheList{
-		CreditTranche: make([]model.CreditTranche, 0, len(items)),
+func (m *Mapper) mapLoanCreditTrancheList(items []LoanTrancheInput) CreditTrancheList {
+	list := CreditTrancheList{
+		CreditTranche: make([]CreditTranche, 0, len(items)),
 	}
 
 	for _, item := range items {
-		list.CreditTranche = append(list.CreditTranche, model.CreditTranche{
+		list.CreditTranche = append(list.CreditTranche, CreditTranche{
 			LoanType:           item.F037LoanType,
 			AgreementStartDate: item.AgreemStartDate,
 			AgreementEndDate:   derefString(item.AgreemEndDate),
@@ -376,8 +374,8 @@ func (m *Mapper) mapLoanCreditTrancheList(items []model.LoanTrancheInput) model.
 	return list
 }
 
-func (m *Mapper) mapRequestResultStatus(counterpartyID string) model.RequestResultStatus {
-	return model.RequestResultStatus{
+func (m *Mapper) mapRequestResultStatus(counterpartyID string) RequestResultStatus {
+	return RequestResultStatus{
 		CounterpartyID:    counterpartyID,
 		DataSourceCode:    dataSourceCode,
 		ServiceCode:       serviceCode,
