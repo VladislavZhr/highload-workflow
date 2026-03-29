@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 
-	"github.com/VladislavZhr/highload-workflow/handler/internal/pipeline/transport"
+	"github.com/VladislavZhr/highload-workflow/handler/internal/transport"
 )
 
 type Service struct {

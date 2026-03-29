@@ -10,7 +10,7 @@ import (
 	"github.com/VladislavZhr/highload-workflow/handler/internal/pipeline/mapper"
 	"github.com/VladislavZhr/highload-workflow/handler/internal/pipeline/start"
 	"github.com/VladislavZhr/highload-workflow/handler/internal/pipeline/state"
-	"github.com/VladislavZhr/highload-workflow/handler/internal/pipeline/transport"
+	"github.com/VladislavZhr/highload-workflow/handler/internal/transport"
 )
 
 type Orchestrator struct {
