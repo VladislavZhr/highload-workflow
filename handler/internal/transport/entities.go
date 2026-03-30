@@ -1,10 +1,12 @@
-package model
+package transport
+
+import "encoding/json"
 
 type TransportMessage struct {
-	Message Message `json:"message"`
+	Message TransportEnvelope `json:"message"`
 }
 
-type Message struct {
+type TransportEnvelope struct {
 	Header TransportHeader `json:"header"`
 	Body   TransportBody   `json:"body"`
 }
@@ -16,13 +18,5 @@ type TransportHeader struct {
 }
 
 type TransportBody struct {
-	Raw BusinessInput `json:"raw"`
-}
-
-type BusinessInput struct {
-	Counterparties CounterpartiesPayload `json:"counterparties"`
-}
-
-type CounterpartiesPayload struct {
-	Counterparty []Counterparty `json:"counterparty"`
+	Raw json.RawMessage `json:"raw"`
 }
