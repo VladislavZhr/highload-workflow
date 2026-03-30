@@ -74,15 +74,20 @@ func (o *Orchestrator) Handle(
 	return processedMsg, nil
 }
 
-func (o *Orchestrator) withTx(ctx context.Context, beginMsg string, commitMsg string, fn func(tx *sql.Tx) error) error {
+func (o *Orchestrator) withTx(
+	ctx context.Context,
+	beginMsg string,
+	commitMsg string,
+	fn func(tx *sql.Tx) error,
+) error {
 	tx, err := o.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("%s: %w", beginMsg, err)
 	}
 
-	commited := false
+	committed := false
 	defer func() {
-		if !commited {
+		if !committed {
 			_ = tx.Rollback()
 		}
 	}()
@@ -90,7 +95,12 @@ func (o *Orchestrator) withTx(ctx context.Context, beginMsg string, commitMsg st
 	if err := fn(tx); err != nil {
 		return fmt.Errorf("%s: %w", commitMsg, err)
 	}
-	commited = true
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("%s: %w", commitMsg, err)
+	}
+
+	committed = true
 	return nil
 }
 
