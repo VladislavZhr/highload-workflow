@@ -103,17 +103,18 @@ func (c *Consumer) readLoop(ctx context.Context) error {
 				return err
 			}
 
+			if errors.Is(err, context.DeadlineExceeded) {
+				continue
+			}
+
 			return fmt.Errorf("fetch kafka message: %w", err)
 		}
 
-		job := Job{
-			Message: msg,
-		}
+		job := Job{Message: msg}
 
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-
 		case c.jobs <- job:
 			log.Printf(
 				"message accepted partition=%d offset=%d",

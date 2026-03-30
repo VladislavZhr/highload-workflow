@@ -6,10 +6,10 @@ import (
 	"log"
 	"os/signal"
 	"syscall"
-	"time"
 
 	_ "github.com/lib/pq"
 
+	"github.com/VladislavZhr/highload-workflow/handler/internal/config"
 	"github.com/VladislavZhr/highload-workflow/handler/internal/kafka"
 	"github.com/VladislavZhr/highload-workflow/handler/internal/pipeline"
 	"github.com/VladislavZhr/highload-workflow/handler/internal/pipeline/finalize"
@@ -22,7 +22,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	db, err := newDB()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("load config: %v", err)
+	}
+
+	db, err := newDB(cfg)
 	if err != nil {
 		log.Fatalf("init db: %v", err)
 	}
@@ -34,19 +39,9 @@ func main() {
 
 	stateRepo := state.NewRepository(db)
 
-	// Замінити на свої актуальні значення
-	const (
-		maxRetryCount = 3
-		leaseDuration = 30 * time.Second
-	)
+	startService := start.NewService(stateRepo, cfg.MaxRetryCount, cfg.LeaseDuration)
 
-	startService := start.NewService(stateRepo, maxRetryCount, leaseDuration)
-
-	// Якщо у тебе конструктор Mapper інший, просто підстав свій.
-	// Наприклад:
-	// domainMapper := mapper.NewMapper(...)
 	domainMapper := mapper.NewMapper()
-
 	mapperService := mapper.NewService(domainMapper)
 	finalizeService := finalize.NewService(stateRepo)
 
@@ -58,22 +53,18 @@ func main() {
 	)
 
 	consumerCfg := kafka.Config{
-		Brokers: []string{
-			"localhost:9092",
-		},
-		GroupID: "highload-workflow-handler-group",
-		Topic:   "input-topic",
-
-		MinBytes: 1,
-		MaxBytes: 100 * 1024 * 1024, // 100 MB, бо ти граєшся з payload 70 MB
-		MaxWait:  2 * time.Second,
-
-		WorkersCount:   4,
-		JobsBufferSize: 64,
-		ResultsBufSize: 64,
-
-		ReadBatchTimeout: 5 * time.Second,
-		CommitTimeout:    5 * time.Second,
+		Brokers:          cfg.KafkaBrokers,
+		GroupID:          cfg.KafkaGroupID,
+		Topic:            cfg.KafkaTopic,
+		MinBytes:         cfg.KafkaMinBytes,
+		MaxBytes:         cfg.KafkaMaxBytes,
+		MaxWait:          cfg.KafkaMaxWait,
+		WorkersCount:     cfg.WorkersCount,
+		JobsBufferSize:   cfg.JobsBufferSize,
+		ResultsBufSize:   cfg.ResultsBufferSize,
+		ReadBatchTimeout: cfg.ReadBatchTimeout,
+		CommitTimeout:    cfg.CommitTimeout,
+		ShutdownTimeout:  cfg.ShutdownTimeout,
 	}
 
 	consumer, err := kafka.NewConsumer(consumerCfg, orchestrator)
@@ -81,7 +72,13 @@ func main() {
 		log.Fatalf("init kafka consumer: %v", err)
 	}
 
-	log.Println("consumer started")
+	log.Printf(
+		"handler started kafka_brokers=%v group_id=%s topic=%s workers=%d",
+		cfg.KafkaBrokers,
+		cfg.KafkaGroupID,
+		cfg.KafkaTopic,
+		cfg.WorkersCount,
+	)
 
 	if err := consumer.Run(ctx); err != nil {
 		log.Fatalf("consumer stopped with error: %v", err)
@@ -90,21 +87,18 @@ func main() {
 	log.Println("consumer stopped")
 }
 
-func newDB() (*sql.DB, error) {
-	// Тестовий DSN. Перепишеш під свої параметри.
-	dsn := "postgres://postgres:postgres@localhost:5432/highload_workflow?sslmode=disable"
-
-	db, err := sql.Open("postgres", dsn)
+func newDB(cfg config.Config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.DatabaseDSN)
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(20)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(30 * time.Minute)
-	db.SetConnMaxIdleTime(10 * time.Minute)
+	db.SetMaxOpenConns(cfg.DBMaxOpenConns)
+	db.SetMaxIdleConns(cfg.DBMaxIdleConns)
+	db.SetConnMaxLifetime(cfg.DBConnMaxLifetime)
+	db.SetConnMaxIdleTime(cfg.DBConnMaxIdleTime)
 
-	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	pingCtx, cancel := context.WithTimeout(context.Background(), cfg.DBPingTimeout)
 	defer cancel()
 
 	if err := db.PingContext(pingCtx); err != nil {

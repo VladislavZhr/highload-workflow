@@ -25,7 +25,6 @@ func NewConnectorService(producer *kafka.Producer) *ConnectorService {
 }
 
 func (s *ConnectorService) Process(ctx context.Context, req model.Request) (model.TransportMessage, error) {
-
 	if err := req.Validate(); err != nil {
 		return model.TransportMessage{}, errors.Join(ErrValidation, err)
 	}
@@ -38,7 +37,11 @@ func (s *ConnectorService) Process(ctx context.Context, req model.Request) (mode
 				Timestamp:     req.Meta.Timestamp,
 			},
 			Body: model.TransportBody{
-				Raw: req.Counterparties.Counterparty,
+				Raw: model.BusinessInput{
+					Counterparties: model.CounterpartiesPayload{
+						Counterparty: req.Counterparties.Counterparty,
+					},
+				},
 			},
 		},
 	}

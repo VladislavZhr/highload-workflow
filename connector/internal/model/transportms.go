@@ -16,5 +16,13 @@ type TransportHeader struct {
 }
 
 type TransportBody struct {
-	Raw []Counterparty `json:"raw"`
+	Raw BusinessInput `json:"raw"`
+}
+
+type BusinessInput struct {
+	Counterparties CounterpartiesPayload `json:"counterparties"`
+}
+
+type CounterpartiesPayload struct {
+	Counterparty []Counterparty `json:"counterparty"`
 }

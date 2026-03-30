@@ -74,68 +74,62 @@ func (o *Orchestrator) Handle(
 	return processedMsg, nil
 }
 
-func (o *Orchestrator) runStartTx(
-	ctx context.Context,
-	correlationID string,
-	requestID string,
-) error {
+func (o *Orchestrator) withTx(ctx context.Context, beginMsg string, commitMsg string, fn func(tx *sql.Tx) error) error {
 	tx, err := o.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("begin start tx: %w", err)
+		return fmt.Errorf("%s: %w", beginMsg, err)
 	}
 
-	committed := false
+	commited := false
 	defer func() {
-		if !committed {
+		if !commited {
 			_ = tx.Rollback()
 		}
 	}()
 
-	if err := o.startService.InitPipeline(ctx, tx, correlationID, requestID); err != nil {
-		if errors.Is(err, start.ErrSkipCompleted) ||
-			errors.Is(err, start.ErrSkipPermanent) ||
-			errors.Is(err, start.ErrSkipProcessing) ||
-			errors.Is(err, start.ErrStateConflict) {
-			return err
-		}
-
-		return fmt.Errorf("init pipeline: %w", err)
+	if err := fn(tx); err != nil {
+		return fmt.Errorf("%s: %w", commitMsg, err)
 	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit start tx: %w", err)
-	}
-
-	committed = true
+	commited = true
 	return nil
+}
+
+func (o *Orchestrator) runStartTx(ctx context.Context, correlationID string, requestID string) error {
+	return o.withTx(
+		ctx,
+		"begin start tx",
+		"commit start tx",
+		func(tx *sql.Tx) error {
+			if err := o.startService.InitPipeline(ctx, tx, correlationID, requestID); err != nil {
+				if errors.Is(err, start.ErrSkipCompleted) ||
+					errors.Is(err, start.ErrSkipPermanent) ||
+					errors.Is(err, start.ErrSkipProcessing) ||
+					errors.Is(err, start.ErrStateConflict) {
+					return err
+				}
+				return fmt.Errorf("init pipeline: %w", err)
+			}
+			return nil
+		},
+	)
 }
 
 func (o *Orchestrator) runFinalizeSuccessTx(
 	ctx context.Context,
 	correlationID string,
 ) error {
-	tx, err := o.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("begin finalize success tx: %w", err)
-	}
+	return o.withTx(
+		ctx,
+		"begin finalize success tx",
+		"commit finalize success tx",
+		func(tx *sql.Tx) error {
+			if err := o.finalizeService.FinalizeSuccessState(ctx, tx, correlationID); err != nil {
+				return fmt.Errorf("finalize success state: %w", err)
+			}
 
-	committed := false
-	defer func() {
-		if !committed {
-			_ = tx.Rollback()
-		}
-	}()
-
-	if err := o.finalizeService.FinalizeSuccessState(ctx, tx, correlationID); err != nil {
-		return fmt.Errorf("finalize success state: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit finalize success tx: %w", err)
-	}
-
-	committed = true
-	return nil
+			return nil
+		},
+	)
 }
 
 func (o *Orchestrator) runFinalizeFailedTx(
@@ -144,34 +138,24 @@ func (o *Orchestrator) runFinalizeFailedTx(
 	status state.ProcessingStatus,
 	lastError *string,
 ) error {
-	tx, err := o.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("begin finalize failed tx: %w", err)
-	}
-
-	committed := false
-	defer func() {
-		if !committed {
-			_ = tx.Rollback()
-		}
-	}()
-
-	if err := o.finalizeService.FinalizeFailedState(
+	return o.withTx(
 		ctx,
-		tx,
-		correlationID,
-		status,
-		lastError,
-	); err != nil {
-		return fmt.Errorf("finalize failed state: %w", err)
-	}
+		"begin finalize failed tx",
+		"commit finalize failed tx",
+		func(tx *sql.Tx) error {
+			if err := o.finalizeService.FinalizeFailedState(
+				ctx,
+				tx,
+				correlationID,
+				status,
+				lastError,
+			); err != nil {
+				return fmt.Errorf("finalize failed state: %w", err)
+			}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit finalize failed tx: %w", err)
-	}
-
-	committed = true
-	return nil
+			return nil
+		},
+	)
 }
 
 func classifyProcessingError(err error) state.ProcessingStatus {
